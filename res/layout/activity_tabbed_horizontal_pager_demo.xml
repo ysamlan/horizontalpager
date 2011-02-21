@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent"
+    android:orientation="vertical">
+    <RadioGroup
+        android:id="@+id/tabs"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:orientation="horizontal">
+        <RadioButton
+            android:id="@+id/radio_btn_0"
+            android:layout_height="wrap_content"
+            android:layout_width="0px"
+            android:layout_weight="1"
+            android:text="#1"
+            android:checked="true" />
+        <RadioButton
+            android:id="@+id/radio_btn_1"
+            android:layout_height="wrap_content"
+            android:layout_width="0px"
+            android:layout_weight="1"
+            android:text="#2" />
+        <RadioButton
+            android:id="@+id/radio_btn_2"
+            android:layout_height="wrap_content"
+            android:layout_width="0px"
+            android:layout_weight="1"
+            android:text="#3" />
+    </RadioGroup>
+    <com.github.ysamlan.horizontalpager.HorizontalPager
+        android:id="@+id/horizontal_pager"
+        android:layout_width="fill_parent"
+        android:layout_height="0px"
+        android:layout_weight="1">
+        <ScrollView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:text="@string/lipsum"
+                android:textSize="24sp"
+                android:textColor="#000"
+                android:textStyle="bold"
+                android:background="#f00" />
+        </ScrollView>
+        <ScrollView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:text="@string/lipsum"
+                android:textSize="24sp"
+                android:textColor="#000"
+                android:textStyle="bold"
+                android:background="#0f0" />
+        </ScrollView>
+        <ScrollView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:text="@string/lipsum"
+                android:textSize="24sp"
+                android:textColor="#fff"
+                android:textStyle="bold"
+                android:background="#00f" />
+        </ScrollView>
+    </com.github.ysamlan.horizontalpager.HorizontalPager>
+    <Button
+        android:id="@+id/simple_demo_btn"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:text="Simple Demo" />
+</LinearLayout>
