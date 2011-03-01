@@ -22,11 +22,13 @@ package com.github.ysamlan.horizontalpager;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Scroller;
 
 /**
@@ -40,32 +42,26 @@ import android.widget.Scroller;
  *
  * Modifications from original version: Animate argument in setCurrentScreen and duration in
  * snapToScreen; onInterceptTouchEvent handling to support nesting a vertical Scrollview inside the
- * RealViewSwitcher; allowing snapping to a view even during an ongoing scroll.
+ * RealViewSwitcher; allowing snapping to a view even during an ongoing scroll; snap to next/prev
+ * view on 25% scroll change; density-independent swipe sensitivity.
  *
  * @author Marc Reichelt, <a href="http://www.marcreichelt.de/">http://www.marcreichelt.de/</a>
  * @version 0.1.0
  */
 public final class HorizontalPager extends ViewGroup {
-    /**
-     * Listener for the event that the HorizontalPager switches to a new view.
-     */
-    public static interface OnScreenSwitchListener {
-        /**
-         * Notifies listeners about the new screen. Runs after the animation completed.
-         *
-         * @param screen The new screen index.
-         */
-        void onScreenSwitched(int screen);
-    }
-
     /*
      * How long to animate between screens when programmatically setting with setCurrentScreen using
      * the animate parameter
      */
     private static final int ANIMATION_SCREEN_SET_DURATION_MILLIS = 500;
+    // What fraction (1/x) of the screen the user must swipe to indicate a page change
+    private static final int FRACTION_OF_SCREEN_WIDTH_FOR_SWIPE = 4;
     private static final int INVALID_SCREEN = -1;
-    // Velocity of a swipe (in pixels per second) to force a swipe to the next/previous screen.
-    private static final int SNAP_VELOCITY = 1000;
+    /*
+     * Velocity of a swipe (in density-independent pixels per second) to force a swipe to the
+     * next/previous screen. Adjusted into mDensityAdjustedSnapVelocity on init.
+     */
+    private static final int SNAP_VELOCITY_DIP_PER_SECOND = 600;
     // Argument to getVelocity for units to give pixels per second (1 = pixels per millisecond).
     private static final int VELOCITY_UNIT_PIXELS_PER_SECOND = 1000;
 
@@ -73,6 +69,7 @@ public final class HorizontalPager extends ViewGroup {
     private static final int TOUCH_STATE_HORIZONTAL_SCROLLING = 1;
     private static final int TOUCH_STATE_VERTICAL_SCROLLING = -1;
     private int mCurrentScreen;
+    private int mDensityAdjustedSnapVelocity;
     private boolean mFirstLayout = true;
     private float mLastMotionX;
     private float mLastMotionY;
@@ -121,6 +118,13 @@ public final class HorizontalPager extends ViewGroup {
      */
     private void init() {
         mScroller = new Scroller(getContext());
+
+        // Calculate the density-dependent snap velocity in pixels
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        ((WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay()
+                .getMetrics(displayMetrics);
+        mDensityAdjustedSnapVelocity =
+                (int) (displayMetrics.density * SNAP_VELOCITY_DIP_PER_SECOND);
 
         final ViewConfiguration configuration = ViewConfiguration.get(getContext());
         mTouchSlop = configuration.getScaledTouchSlop();
@@ -316,10 +320,11 @@ public final class HorizontalPager extends ViewGroup {
                             mMaximumVelocity);
                     int velocityX = (int) velocityTracker.getXVelocity();
 
-                    if (velocityX > SNAP_VELOCITY && mCurrentScreen > 0) {
+                    if (velocityX > mDensityAdjustedSnapVelocity && mCurrentScreen > 0) {
                         // Fling hard enough to move left
                         snapToScreen(mCurrentScreen - 1);
-                    } else if (velocityX < -SNAP_VELOCITY && mCurrentScreen < getChildCount() - 1) {
+                    } else if (velocityX < -mDensityAdjustedSnapVelocity
+                            && mCurrentScreen < getChildCount() - 1) {
                         // Fling hard enough to move right
                         snapToScreen(mCurrentScreen + 1);
                     } else {
@@ -397,11 +402,24 @@ public final class HorizontalPager extends ViewGroup {
     }
 
     /**
-     * Snaps to the closest screen.
+     * Snaps to the screen we think the user wants (the current screen for very small movements; the
+     * next/prev screen for bigger movements).
      */
     private void snapToDestination() {
         final int screenWidth = getWidth();
-        final int whichScreen = (getScrollX() + (screenWidth / 2)) / screenWidth;
+        int scrollX = getScrollX();
+        int whichScreen = mCurrentScreen;
+        int deltaX = scrollX - (screenWidth * mCurrentScreen);
+
+        // Check if they want to go to the prev. screen
+        if ((deltaX < 0) && mCurrentScreen != 0
+                && ((screenWidth / FRACTION_OF_SCREEN_WIDTH_FOR_SWIPE) < -deltaX)) {
+            whichScreen--;
+            // Check if they want to go to the next screen
+        } else if ((deltaX > 0) && (mCurrentScreen + 1 != getChildCount())
+                && ((screenWidth / FRACTION_OF_SCREEN_WIDTH_FOR_SWIPE) < deltaX)) {
+            whichScreen++;
+        }
 
         snapToScreen(whichScreen);
     }
@@ -440,5 +458,17 @@ public final class HorizontalPager extends ViewGroup {
         }
 
         invalidate();
+    }
+
+    /**
+     * Listener for the event that the HorizontalPager switches to a new view.
+     */
+    public static interface OnScreenSwitchListener {
+        /**
+         * Notifies listeners about the new screen. Runs after the animation completed.
+         *
+         * @param screen The new screen index.
+         */
+        void onScreenSwitched(int screen);
     }
 }
