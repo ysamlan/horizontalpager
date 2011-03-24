@@ -23,6 +23,7 @@ package com.github.ysamlan.horizontalpager;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -40,10 +41,13 @@ import android.widget.Scroller;
  * {@link HorizontalPager#setOnScreenSwitchListener(OnScreenSwitchListener)} in order to perform
  * operations once a new screen has been selected.
  *
- * Modifications from original version: Animate argument in setCurrentScreen and duration in
- * snapToScreen; onInterceptTouchEvent handling to support nesting a vertical Scrollview inside the
- * RealViewSwitcher; allowing snapping to a view even during an ongoing scroll; snap to next/prev
- * view on 25% scroll change; density-independent swipe sensitivity.
+ * Modifications from original version (ysamlan): Animate argument in setCurrentScreen and duration
+ * in snapToScreen; onInterceptTouchEvent handling to support nesting a vertical Scrollview inside
+ * the RealViewSwitcher; allowing snapping to a view even during an ongoing scroll; snap to
+ * next/prev view on 25% scroll change; density-independent swipe sensitivity.
+ *
+ * Other modifications:
+ * (aveyD) Handle orientation changes properly and fully snap to the right position.
  *
  * @author Marc Reichelt, <a href="http://www.marcreichelt.de/">http://www.marcreichelt.de/</a>
  * @version 0.1.0
@@ -80,6 +84,7 @@ public final class HorizontalPager extends ViewGroup {
     private int mTouchSlop;
     private int mTouchState = TOUCH_STATE_REST;
     private VelocityTracker mVelocityTracker;
+    private int mLastSeenLayoutWidth = -1;
 
     /**
      * Simple constructor to use when creating a view from code.
@@ -156,6 +161,26 @@ public final class HorizontalPager extends ViewGroup {
             scrollTo(mCurrentScreen * width, 0);
             mFirstLayout = false;
         }
+
+        else if (width != mLastSeenLayoutWidth) { // Width has changed
+            /*
+             * Recalculate the width and scroll to the right position to be sure we're in the right
+             * place in the event that we had a rotation that didn't result in an activity restart
+             * (code by aveyD). Without this you can end up between two pages after a rotation.
+             */
+            Display display =
+                    ((WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE))
+                            .getDefaultDisplay();
+            int displayWidth = display.getWidth();
+
+            mNextScreen = Math.max(0, Math.min(getCurrentScreen(), getChildCount() - 1));
+            final int newX = mNextScreen * displayWidth;
+            final int delta = newX - getScrollX();
+
+            mScroller.startScroll(getScrollX(), 0, delta, 0, 0);
+        }
+
+        mLastSeenLayoutWidth   = width;
     }
 
     @Override
