@@ -44,7 +44,9 @@ import android.widget.Scroller;
  * Modifications from original version (ysamlan): Animate argument in setCurrentScreen and duration
  * in snapToScreen; onInterceptTouchEvent handling to support nesting a vertical Scrollview inside
  * the RealViewSwitcher; allowing snapping to a view even during an ongoing scroll; snap to
- * next/prev view on 25% scroll change; density-independent swipe sensitivity.
+ * next/prev view on 25% scroll change; density-independent swipe sensitivity; width-independent
+ * pager animation durations on scrolling to properly handle large screens without excessively
+ * long animations.
  *
  * Other modifications:
  * (aveyD) Handle orientation changes properly and fully snap to the right position.
@@ -470,14 +472,17 @@ public final class HorizontalPager extends ViewGroup {
         /*
          * Modified by Yoni Samlan: Allow new snapping even during an ongoing scroll animation. This
          * is intended to make HorizontalPager work as expected when used in conjunction with a
-         * RadioGroup used as "tabbed" controls.
+         * RadioGroup used as "tabbed" controls. Also, make the animation take a percentage of our
+         * normal animation time, depending how far they've already scrolled.
          */
         mNextScreen = Math.max(0, Math.min(whichScreen, getChildCount() - 1));
         final int newX = mNextScreen * getWidth();
         final int delta = newX - getScrollX();
 
         if (duration < 0) {
-            mScroller.startScroll(getScrollX(), 0, delta, 0, Math.abs(delta) * 2);
+             // E.g. if they've scrolled 80% of the way, only animation for 20% of the duration
+            mScroller.startScroll(getScrollX(), 0, delta, 0, (int) (Math.abs(delta)
+                    / (float) getWidth() * ANIMATION_SCREEN_SET_DURATION_MILLIS));
         } else {
             mScroller.startScroll(getScrollX(), 0, delta, 0, duration);
         }
