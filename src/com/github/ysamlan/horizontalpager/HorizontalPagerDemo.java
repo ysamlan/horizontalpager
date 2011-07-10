@@ -20,6 +20,7 @@ public class HorizontalPagerDemo extends Activity {
 
         // Create the view switcher
         HorizontalPager realViewSwitcher = new HorizontalPager(getApplicationContext());
+        realViewSwitcher.setId(R.id.horizontal_pager);
 
         // Add some views to it
         final int[] backgroundColors =

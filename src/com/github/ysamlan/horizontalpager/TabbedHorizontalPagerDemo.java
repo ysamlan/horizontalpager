@@ -19,9 +19,7 @@ public class TabbedHorizontalPagerDemo extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tabbed_horizontal_pager_demo);
         mPager = (HorizontalPager) findViewById(R.id.horizontal_pager);
-        mPager.setOnScreenSwitchListener(onScreenSwitchListener);
         mRadioGroup = (RadioGroup) findViewById(R.id.tabs);
-        mRadioGroup.setOnCheckedChangeListener(onCheckedChangedListener);
 
         // Go to the simple demo if the user clicks on the simple demo button
         findViewById(R.id.simple_demo_btn).setOnClickListener(new View.OnClickListener() {
@@ -31,6 +29,13 @@ public class TabbedHorizontalPagerDemo extends Activity {
                         HorizontalPagerDemo.class));
             }
         });
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mPager.setOnScreenSwitchListener(onScreenSwitchListener);
+        mRadioGroup.setOnCheckedChangeListener(onCheckedChangedListener);
     }
 
     private final HorizontalPager.OnScreenSwitchListener onScreenSwitchListener =

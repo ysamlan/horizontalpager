@@ -21,6 +21,8 @@
 package com.github.ysamlan.horizontalpager;
 
 import android.content.Context;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -144,6 +146,22 @@ public final class HorizontalPager extends ViewGroup {
     }
 
     @Override
+    protected Parcelable onSaveInstanceState() {
+        final SavedState state = new SavedState(super.onSaveInstanceState());
+        state.mCurrentScreen = mCurrentScreen;
+        return state;
+    }
+    
+    @Override
+    protected void onRestoreInstanceState(Parcelable state) {
+        SavedState savedState = (SavedState) state;
+        super.onRestoreInstanceState(savedState.getSuperState());
+        if (savedState.mCurrentScreen != -1) {
+            mCurrentScreen = savedState.mCurrentScreen;
+        }
+    }
+
+    @Override
     protected void onMeasure(final int widthMeasureSpec, final int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
@@ -167,9 +185,7 @@ public final class HorizontalPager extends ViewGroup {
         if (mFirstLayout) {
             scrollTo(mCurrentScreen * width, 0);
             mFirstLayout = false;
-        }
-
-        else if (width != mLastSeenLayoutWidth) { // Width has changed
+        } else if (width != mLastSeenLayoutWidth) { // Width has changed
             /*
              * Recalculate the width and scroll to the right position to be sure we're in the right
              * place in the event that we had a rotation that didn't result in an activity restart
@@ -506,4 +522,38 @@ public final class HorizontalPager extends ViewGroup {
          */
         void onScreenSwitched(int screen);
     }
+
+    /**
+     * A parcelable so we can save our current screen and return to it after an activity destroy.
+     */
+    public static class SavedState extends BaseSavedState {
+        
+        private int mCurrentScreen = -1;
+
+        public SavedState(Parcelable superState) {
+            super(superState);
+        }
+
+        public SavedState(Parcel in) {
+            super(in);
+            mCurrentScreen = in.readInt();
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags) {
+            super.writeToParcel(out, flags);
+            out.writeInt(mCurrentScreen);
+        }
+
+        public static final Parcelable.Creator<SavedState> CREATOR = new Parcelable.Creator<SavedState>() {
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
+    }
+
 }
