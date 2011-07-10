@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.github.ysamlan.horizontalpager.HorizontalPager
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@id/horizontal_pager"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent">
+	
+	<ListView
+		android:id="@+id/list1"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent"
+		android:cacheColorHint="#ff440000"
+		android:background="#ff440000" />
+		
+	<ListView
+		android:id="@+id/list2"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent"
+		android:cacheColorHint="#ff004400"
+		android:background="#ff004400" />
+
+	<ListView
+		android:id="@+id/list3"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent"
+		android:cacheColorHint="#ff000044"
+		android:background="#ff000044" />
+
+</com.github.ysamlan.horizontalpager.HorizontalPager>

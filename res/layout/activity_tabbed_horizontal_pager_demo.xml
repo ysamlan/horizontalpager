@@ -71,9 +71,20 @@
                 android:background="#00f" />
         </ScrollView>
     </com.github.ysamlan.horizontalpager.HorizontalPager>
-    <Button
-        android:id="@+id/simple_demo_btn"
-        android:layout_height="wrap_content"
-        android:layout_width="fill_parent"
-        android:text="Simple Demo" />
+    <LinearLayout
+    	android:layout_height="wrap_content"
+    	android:layout_width="fill_parent">
+	    <Button
+	        android:id="@+id/simple_demo_btn"
+	        android:layout_height="wrap_content"
+	        android:layout_width="0dp"
+	        android:layout_weight="1"
+	        android:text="Simple Demo" />
+	    <Button
+	        android:id="@+id/list_demo_btn"
+	        android:layout_height="wrap_content"
+	        android:layout_width="0dp"
+	        android:layout_weight="1"
+	        android:text="List Demo" />
+   	</LinearLayout>
 </LinearLayout>

@@ -29,6 +29,15 @@ public class TabbedHorizontalPagerDemo extends Activity {
                         HorizontalPagerDemo.class));
             }
         });
+
+        // Go to the list demo if the user clicks on the list demo button
+        findViewById(R.id.list_demo_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                startActivity(new Intent(TabbedHorizontalPagerDemo.this,
+                        ListHorizontalPagerDemo.class));
+            }
+        });
     }
     
     @Override
