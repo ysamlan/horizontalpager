@@ -30,6 +30,8 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 import android.widget.Scroller;
 
 /**
@@ -70,6 +72,7 @@ public final class HorizontalPager extends ViewGroup {
     private static final int SNAP_VELOCITY_DIP_PER_SECOND = 600;
     // Argument to getVelocity for units to give pixels per second (1 = pixels per millisecond).
     private static final int VELOCITY_UNIT_PIXELS_PER_SECOND = 1000;
+    private static final float INTERPOLATION_FACTOR = 1.75f;
 
     private static final int TOUCH_STATE_REST = 0;
     private static final int TOUCH_STATE_HORIZONTAL_SCROLLING = 1;
@@ -124,7 +127,9 @@ public final class HorizontalPager extends ViewGroup {
      * Sets up the scroller and touch/fling sensitivity parameters for the pager.
      */
     private void init() {
-        mScroller = new Scroller(getContext());
+        // use a DecelerateInterpolator to have more natural movement on long horizontal scrolls
+        Interpolator interpolator = new DecelerateInterpolator(INTERPOLATION_FACTOR);
+        mScroller = new Scroller(getContext(), interpolator);
 
         // Calculate the density-dependent snap velocity in pixels
         DisplayMetrics displayMetrics = new DisplayMetrics();
