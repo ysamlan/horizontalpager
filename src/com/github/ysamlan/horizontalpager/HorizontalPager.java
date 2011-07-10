@@ -224,77 +224,39 @@ public final class HorizontalPager extends ViewGroup {
 
     @Override
     public boolean onInterceptTouchEvent(final MotionEvent ev) {
-        /*
-         * By Yoni Samlan: Modified onInterceptTouchEvent based on standard ScrollView's
-         * onIntercept. The logic is designed to support a nested vertically scrolling view inside
-         * this one; once a scroll registers for X-wise scrolling, handle it in this view and don't
-         * let the children, but once a scroll registers for y-wise scrolling, let the children
-         * handle it exclusively.
-         */
         final int action = ev.getAction();
         boolean intercept = false;
 
         switch (action) {
             case MotionEvent.ACTION_MOVE:
-                /*
-                 * If we're in a horizontal scroll event, take it (intercept further events). But if
-                 * we're mid-vertical-scroll, don't even try; let the children deal with it. If we
-                 * haven't found a scroll event yet, check for one.
-                 */
-                if (mTouchState == TOUCH_STATE_HORIZONTAL_SCROLLING) {
-                    /*
-                     * We've already started a horizontal scroll; set intercept to true so we can
-                     * take the remainder of all touch events in onTouchEvent.
-                     */
-                    intercept = true;
-                } else if (mTouchState == TOUCH_STATE_VERTICAL_SCROLLING) {
-                    // Let children handle the events for the duration of the scroll event.
-                    intercept = false;
-                } else { // We haven't picked up a scroll event yet; check for one.
-
-                    /*
-                     * If we detected a horizontal scroll event, start stealing touch events (mark
-                     * as scrolling). Otherwise, see if we had a vertical scroll event -- if so, let
-                     * the children handle it and don't look to intercept again until the motion is
-                     * done.
-                     */
-
-                    final float x = ev.getX();
-                    final int xDiff = (int) Math.abs(x - mLastMotionX);
-                    boolean xMoved = xDiff > mTouchSlop;
-
-                    if (xMoved) {
-                        // Scroll if the user moved far enough along the X axis
-                        mTouchState = TOUCH_STATE_HORIZONTAL_SCROLLING;
-                        mLastMotionX = x;
-                    }
-
-                    final float y = ev.getY();
-                    final int yDiff = (int) Math.abs(y - mLastMotionY);
-                    boolean yMoved = yDiff > mTouchSlop;
-
-                    if (yMoved) {
-                        mTouchState = TOUCH_STATE_VERTICAL_SCROLLING;
-                    }
+                final int xDiff = (int) Math.abs(ev.getX() - mLastMotionX);
+                if (xDiff > mTouchSlop) {
+                    mTouchState = TOUCH_STATE_HORIZONTAL_SCROLLING;
+                    mLastMotionX = ev.getX();
                 }
 
+                final int yDiff = (int) Math.abs(ev.getY() - mLastMotionY);
+                if (yDiff > mTouchSlop) {
+                    mTouchState = TOUCH_STATE_VERTICAL_SCROLLING;
+                }
+
+                if ((Math.abs(xDiff * 2) > Math.abs(yDiff)) && (xDiff > mTouchSlop)) {
+                    intercept = true;
+                }
                 break;
-            case MotionEvent.ACTION_CANCEL:
+
             case MotionEvent.ACTION_UP:
-                // Release the drag.
                 mTouchState = TOUCH_STATE_REST;
                 break;
+
             case MotionEvent.ACTION_DOWN:
-                /*
-                 * No motion yet, but register the coordinates so we can check for intercept at the
-                 * next MOVE event.
-                 */
                 mLastMotionY = ev.getY();
                 mLastMotionX = ev.getX();
                 break;
+
             default:
                 break;
-            }
+        }
 
         return intercept;
     }
