@@ -128,8 +128,10 @@ public final class HorizontalPager extends ViewGroup {
 
         // Calculate the density-dependent snap velocity in pixels
         DisplayMetrics displayMetrics = new DisplayMetrics();
-        ((WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay()
+		if (!this.isInEditMode()) {
+        	((WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay()
                 .getMetrics(displayMetrics);
+		}
         mDensityAdjustedSnapVelocity =
                 (int) (displayMetrics.density * SNAP_VELOCITY_DIP_PER_SECOND);
 
