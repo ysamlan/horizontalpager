@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="fill_parent"
-    android:layout_width="fill_parent"
-    android:orientation="vertical">
+    android:layout_width="fill_parent">
     <RadioGroup
         android:id="@+id/tabs"
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_alignParentTop="true">
         <RadioButton
             android:id="@+id/radio_btn_0"
             android:layout_height="wrap_content"
@@ -32,8 +32,9 @@
     <com.github.ysamlan.horizontalpager.HorizontalPager
         android:id="@+id/horizontal_pager"
         android:layout_width="fill_parent"
-        android:layout_height="0px"
-        android:layout_weight="1">
+        android:layout_height="fill_parent"
+		android:layout_above="@+id/simple_demo_btn"
+        android:layout_below="@id/tabs">
         <ScrollView
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
@@ -73,7 +74,8 @@
     </com.github.ysamlan.horizontalpager.HorizontalPager>
     <Button
         android:id="@+id/simple_demo_btn"
+        android:layout_alignParentBottom="true"
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
         android:text="Simple Demo" />
-</LinearLayout>
+</RelativeLayout>
