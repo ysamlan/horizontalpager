@@ -26,5 +26,8 @@
         <activity
             android:name=".HorizontalPagerDemo"
             android:label="@string/app_name" />
+        <activity
+            android:name=".ListHorizontalPagerDemo"
+            android:label="@string/app_name" />
     </application>
 </manifest>

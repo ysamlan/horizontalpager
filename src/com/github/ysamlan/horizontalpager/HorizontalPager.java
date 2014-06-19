@@ -21,6 +21,8 @@
 package com.github.ysamlan.horizontalpager;
 
 import android.content.Context;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -30,6 +32,8 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 import android.widget.Scroller;
 
 /**
@@ -70,6 +74,7 @@ public final class HorizontalPager extends ViewGroup {
     private static final int SNAP_VELOCITY_DIP_PER_SECOND = 600;
     // Argument to getVelocity for units to give pixels per second (1 = pixels per millisecond).
     private static final int VELOCITY_UNIT_PIXELS_PER_SECOND = 1000;
+    private static final float INTERPOLATION_FACTOR = 1.75f;
 
     private static final int TOUCH_STATE_REST = 0;
     private static final int TOUCH_STATE_HORIZONTAL_SCROLLING = 1;
@@ -124,7 +129,9 @@ public final class HorizontalPager extends ViewGroup {
      * Sets up the scroller and touch/fling sensitivity parameters for the pager.
      */
     private void init() {
-        mScroller = new Scroller(getContext());
+        // use a DecelerateInterpolator to have more natural movement on long horizontal scrolls
+        Interpolator interpolator = new DecelerateInterpolator(INTERPOLATION_FACTOR);
+        mScroller = new Scroller(getContext(), interpolator);
 
         // Calculate the density-dependent snap velocity in pixels
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -136,6 +143,22 @@ public final class HorizontalPager extends ViewGroup {
         final ViewConfiguration configuration = ViewConfiguration.get(getContext());
         mTouchSlop = configuration.getScaledTouchSlop();
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
+    }
+
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        final SavedState state = new SavedState(super.onSaveInstanceState());
+        state.mCurrentScreen = mCurrentScreen;
+        return state;
+    }
+    
+    @Override
+    protected void onRestoreInstanceState(Parcelable state) {
+        SavedState savedState = (SavedState) state;
+        super.onRestoreInstanceState(savedState.getSuperState());
+        if (savedState.mCurrentScreen != -1) {
+            mCurrentScreen = savedState.mCurrentScreen;
+        }
     }
 
     @Override
@@ -162,9 +185,7 @@ public final class HorizontalPager extends ViewGroup {
         if (mFirstLayout) {
             scrollTo(mCurrentScreen * width, 0);
             mFirstLayout = false;
-        }
-
-        else if (width != mLastSeenLayoutWidth) { // Width has changed
+        } else if (width != mLastSeenLayoutWidth) { // Width has changed
             /*
              * Recalculate the width and scroll to the right position to be sure we're in the right
              * place in the event that we had a rotation that didn't result in an activity restart
@@ -203,77 +224,39 @@ public final class HorizontalPager extends ViewGroup {
 
     @Override
     public boolean onInterceptTouchEvent(final MotionEvent ev) {
-        /*
-         * By Yoni Samlan: Modified onInterceptTouchEvent based on standard ScrollView's
-         * onIntercept. The logic is designed to support a nested vertically scrolling view inside
-         * this one; once a scroll registers for X-wise scrolling, handle it in this view and don't
-         * let the children, but once a scroll registers for y-wise scrolling, let the children
-         * handle it exclusively.
-         */
         final int action = ev.getAction();
         boolean intercept = false;
 
         switch (action) {
             case MotionEvent.ACTION_MOVE:
-                /*
-                 * If we're in a horizontal scroll event, take it (intercept further events). But if
-                 * we're mid-vertical-scroll, don't even try; let the children deal with it. If we
-                 * haven't found a scroll event yet, check for one.
-                 */
-                if (mTouchState == TOUCH_STATE_HORIZONTAL_SCROLLING) {
-                    /*
-                     * We've already started a horizontal scroll; set intercept to true so we can
-                     * take the remainder of all touch events in onTouchEvent.
-                     */
-                    intercept = true;
-                } else if (mTouchState == TOUCH_STATE_VERTICAL_SCROLLING) {
-                    // Let children handle the events for the duration of the scroll event.
-                    intercept = false;
-                } else { // We haven't picked up a scroll event yet; check for one.
-
-                    /*
-                     * If we detected a horizontal scroll event, start stealing touch events (mark
-                     * as scrolling). Otherwise, see if we had a vertical scroll event -- if so, let
-                     * the children handle it and don't look to intercept again until the motion is
-                     * done.
-                     */
-
-                    final float x = ev.getX();
-                    final int xDiff = (int) Math.abs(x - mLastMotionX);
-                    boolean xMoved = xDiff > mTouchSlop;
-
-                    if (xMoved) {
-                        // Scroll if the user moved far enough along the X axis
-                        mTouchState = TOUCH_STATE_HORIZONTAL_SCROLLING;
-                        mLastMotionX = x;
-                    }
-
-                    final float y = ev.getY();
-                    final int yDiff = (int) Math.abs(y - mLastMotionY);
-                    boolean yMoved = yDiff > mTouchSlop;
-
-                    if (yMoved) {
-                        mTouchState = TOUCH_STATE_VERTICAL_SCROLLING;
-                    }
+                final int xDiff = (int) Math.abs(ev.getX() - mLastMotionX);
+                if (xDiff > mTouchSlop) {
+                    mTouchState = TOUCH_STATE_HORIZONTAL_SCROLLING;
+                    mLastMotionX = ev.getX();
                 }
 
+                final int yDiff = (int) Math.abs(ev.getY() - mLastMotionY);
+                if (yDiff > mTouchSlop) {
+                    mTouchState = TOUCH_STATE_VERTICAL_SCROLLING;
+                }
+
+                if ((Math.abs(xDiff * 2) > Math.abs(yDiff)) && (xDiff > mTouchSlop)) {
+                    intercept = true;
+                }
                 break;
-            case MotionEvent.ACTION_CANCEL:
+
             case MotionEvent.ACTION_UP:
-                // Release the drag.
                 mTouchState = TOUCH_STATE_REST;
                 break;
+
             case MotionEvent.ACTION_DOWN:
-                /*
-                 * No motion yet, but register the coordinates so we can check for intercept at the
-                 * next MOVE event.
-                 */
                 mLastMotionY = ev.getY();
                 mLastMotionX = ev.getX();
                 break;
+
             default:
                 break;
-            }
+        }
 
         return intercept;
     }
@@ -501,4 +484,38 @@ public final class HorizontalPager extends ViewGroup {
          */
         void onScreenSwitched(int screen);
     }
+
+    /**
+     * A parcelable so we can save our current screen and return to it after an activity destroy.
+     */
+    public static class SavedState extends BaseSavedState {
+        
+        private int mCurrentScreen = -1;
+
+        public SavedState(Parcelable superState) {
+            super(superState);
+        }
+
+        public SavedState(Parcel in) {
+            super(in);
+            mCurrentScreen = in.readInt();
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags) {
+            super.writeToParcel(out, flags);
+            out.writeInt(mCurrentScreen);
+        }
+
+        public static final Parcelable.Creator<SavedState> CREATOR = new Parcelable.Creator<SavedState>() {
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
+            }
+
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
+    }
+
 }
