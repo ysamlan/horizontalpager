@@ -391,6 +391,12 @@ public final class HorizontalPager extends ViewGroup {
         if (mScroller.computeScrollOffset()) {
             scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
             postInvalidate();
+
+            // Notify observer about screen change
+            if (mOnScreenSwitchListener != null) {
+                int switchingScreen = Math.max(0, Math.min(mNextScreen, getVisibleCount() - 1));
+                mOnScreenSwitchListener.onScreenSelected(switchingScreen);
+            }
         } else if (mNextScreen != INVALID_SCREEN) {
             mCurrentScreen = Math.max(0, Math.min(mNextScreen, getVisibleCount() - 1));
 
@@ -503,6 +509,13 @@ public final class HorizontalPager extends ViewGroup {
      * Listener for the event that the HorizontalPager switches to a new view.
      */
     public static interface OnScreenSwitchListener {
+        /**
+         * Notifies listeners about the new screen. Runs before the animation completed.
+         *
+         * @param screen The new screen index.
+         */
+        void onScreenSelected(int screen);
+
         /**
          * Notifies listeners about the new screen. Runs after the animation completed.
          *
