@@ -138,6 +138,15 @@ public final class HorizontalPager extends ViewGroup {
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
     }
 
+    public int getVisibleCount () {
+        int count = 0;
+        for (int i = 0; i < super.getChildCount(); i++)
+            if (getChildAt(i).getVisibility() != View.GONE)
+                count++;
+
+        return count;
+    }
+
     @Override
     protected void onMeasure(final int widthMeasureSpec, final int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -175,7 +184,7 @@ public final class HorizontalPager extends ViewGroup {
                             .getDefaultDisplay();
             int displayWidth = display.getWidth();
 
-            mNextScreen = Math.max(0, Math.min(getCurrentScreen(), getChildCount() - 1));
+            mNextScreen = Math.max(0, Math.min(getCurrentScreen(), getVisibleCount() - 1));
             final int newX = mNextScreen * displayWidth;
             final int delta = newX - getScrollX();
 
@@ -351,7 +360,7 @@ public final class HorizontalPager extends ViewGroup {
                         // Fling hard enough to move left
                         snapToScreen(mCurrentScreen - 1);
                     } else if (velocityX < -mDensityAdjustedSnapVelocity
-                            && mCurrentScreen < getChildCount() - 1) {
+                            && mCurrentScreen < getVisibleCount() - 1) {
                         // Fling hard enough to move right
                         snapToScreen(mCurrentScreen + 1);
                     } else {
@@ -383,7 +392,7 @@ public final class HorizontalPager extends ViewGroup {
             scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
             postInvalidate();
         } else if (mNextScreen != INVALID_SCREEN) {
-            mCurrentScreen = Math.max(0, Math.min(mNextScreen, getChildCount() - 1));
+            mCurrentScreen = Math.max(0, Math.min(mNextScreen, getVisibleCount() - 1));
 
             // Notify observer about screen change
             if (mOnScreenSwitchListener != null) {
@@ -410,7 +419,7 @@ public final class HorizontalPager extends ViewGroup {
      * @param animate True to smoothly scroll to the screen, false to snap instantly
      */
     public void setCurrentScreen(final int currentScreen, final boolean animate) {
-        mCurrentScreen = Math.max(0, Math.min(currentScreen, getChildCount() - 1));
+        mCurrentScreen = Math.max(0, Math.min(currentScreen, getVisibleCount() - 1));
         if (animate) {
             snapToScreen(currentScreen, ANIMATION_SCREEN_SET_DURATION_MILLIS);
         } else {
@@ -443,7 +452,7 @@ public final class HorizontalPager extends ViewGroup {
                 && ((screenWidth / FRACTION_OF_SCREEN_WIDTH_FOR_SWIPE) < -deltaX)) {
             whichScreen--;
             // Check if they want to go to the next screen
-        } else if ((deltaX > 0) && (mCurrentScreen + 1 != getChildCount())
+        } else if ((deltaX > 0) && (mCurrentScreen + 1 != getVisibleCount())
                 && ((screenWidth / FRACTION_OF_SCREEN_WIDTH_FOR_SWIPE) < deltaX)) {
             whichScreen++;
         }
@@ -475,7 +484,7 @@ public final class HorizontalPager extends ViewGroup {
          * RadioGroup used as "tabbed" controls. Also, make the animation take a percentage of our
          * normal animation time, depending how far they've already scrolled.
          */
-        mNextScreen = Math.max(0, Math.min(whichScreen, getChildCount() - 1));
+        mNextScreen = Math.max(0, Math.min(whichScreen, getVisibleCount() - 1));
         final int newX = mNextScreen * getWidth();
         final int delta = newX - getScrollX();
 
